@@ -135,6 +135,88 @@ def extract_headings(md_text):
     return headings
 
 
+def process_footnotes(md_text):
+    """按 ## 参考文献 分段处理脚注：每个参考文献区块就地渲染，
+    正文中的 [^N] 替换为上标。避免跨节编号冲突。
+    返回 cleaned_text（已含内嵌的脚注区块）。
+    """
+    # 按 ## 参考文献 分割
+    parts = re.split(r'(\n## 参考文献\n)', md_text)
+
+    result = [parts[0]]  # 第一个内容块（不含参考文献）
+
+    i = 1
+    while i < len(parts):
+        heading = parts[i]  # "\n## 参考文献\n"
+        refs_block = parts[i + 1] if i + 1 < len(parts) else ''
+
+        # 解析 refs_block：[^N]: text 行，然后是后续内容
+        lines = refs_block.split('\n')
+        ref_lines = []
+        rest_lines = []
+        for line in lines:
+            m = re.match(r'^\[\^(\d+)\]:\s*(.+)', line)
+            if m:
+                ref_lines.append((int(m.group(1)), m.group(2).strip()))
+                continue
+            rest_lines.append(line)
+
+        rest_text = '\n'.join(rest_lines)
+        # 去掉尾部独立的 --- 分隔线
+        rest_text = re.sub(r'\n---\s*$', '', rest_text)
+
+        # 构建脚注 HTML（不重复"参考文献"标题，h2 已有）
+        if ref_lines:
+            items = []
+            for num, txt in ref_lines:
+                items.append(f'<li value="{num}">{txt}</li>')
+            footnotes_div = f'''
+<div class="footnotes">
+    <ol>
+        {''.join(items)}
+    </ol>
+</div>'''
+        else:
+            footnotes_div = ''
+
+        # 替换正文中（result 的最后一个元素）的 [^N] 为上标
+        def _build_replacer(rl):
+            def _replace(m):
+                old = int(m.group(1))
+                for onum, _ in rl:
+                    if onum == old:
+                        return f'<sup class="fn-ref">[{old}]</sup>'
+                return m.group(0)
+            return _replace
+
+        if ref_lines:
+            result[-1] = re.sub(r'\[\^(\d+)\]', _build_replacer(ref_lines), result[-1])
+
+        # 组装：保留 "## 参考文献" 标题，后面紧跟脚注 div
+        result.append(heading)
+        result.append(footnotes_div)
+        result.append(rest_text)
+
+        i += 2
+
+    return '\n'.join(result), {}
+
+
+def build_footnotes_html(footnotes):
+    """（已废弃）脚注已内嵌到正文中。"""
+    return ''
+
+
+def _strip_numbering(title):
+    """去掉标题中的中文编号前缀。
+    '一、核心观点' → '核心观点'
+    '（一）古希腊罗马' → '古希腊罗马'
+    """
+    title = re.sub(r'^[一二三四五六七八九十]+、\s*', '', title)
+    title = re.sub(r'^（[一二三四五六七八九十]+）\s*', '', title)
+    return title
+
+
 def fix_markdown_lists(md_text):
     """修复 markdown 列表格式：确保子列表有足够缩进，列表前有空行。"""
     lines = md_text.split('\n')
@@ -179,13 +261,21 @@ def fix_markdown_lists(md_text):
 
 
 def process_markdown(md_text, chapter_idx, heading_ids):
-    """将 markdown 转换为 HTML，并为 h1/h2/h3 添加锚点 id。"""
+    """将 markdown 转换为 HTML，并为 h1/h2/h3 添加锚点 id。
+    返回 (html, footnotes_html)
+    """
+    # 预处理脚注
+    md_text, footnotes = process_footnotes(md_text)
+    footnotes_html = build_footnotes_html(footnotes)
+
     md_text, math_placeholders = protect_math(md_text)
 
     lines = md_text.split('\n')
     processed_lines = []
     in_code_block = False
     h_counter = 0
+    h2_counter = 0
+    h3_counter = 0
 
     for line in lines:
         stripped = line.strip()
@@ -203,6 +293,16 @@ def process_markdown(md_text, chapter_idx, heading_ids):
                 heading_ids[(chapter_idx, h_counter)] = (level, title, anchor_id)
                 h_counter += 1
                 tag = f'h{level}'
+
+                # 层级编号：h1 不变，h2→1/2/3，h3→a/b/c
+                if level == 1:
+                    h2_counter = 0
+                elif level == 2:
+                    h2_counter += 1
+                    h3_counter = 0
+                elif level == 3:
+                    h3_counter += 1
+
                 processed_lines.append(f'<{tag} id="{anchor_id}">{escape(title)}</{tag}>')
                 continue
 
@@ -216,7 +316,7 @@ def process_markdown(md_text, chapter_idx, heading_ids):
     )
 
     html = restore_math(html, math_placeholders)
-    return html
+    return html, footnotes_html
 
 
 # ============================================================
@@ -238,22 +338,27 @@ def build_toc(all_heading_ids):
             if not chapter_headings:
                 continue
 
-            h1_entry = None
-            h2_entries = []
-            h3_by_h2 = {}
+            # 支持同一文件内的多个 h1，每个 h1 拥有自己的 h2/h3 子项
+            h1_groups = []
+            cur_h1 = None
+            cur_h2s = []
             for (idx, (level, title, anchor_id)) in chapter_headings:
-                if level == 1:
-                    h1_entry = (title, anchor_id)
-                elif level == 2:
-                    h2_entries.append((title, anchor_id))
-                    h3_by_h2[(title, anchor_id)] = []
-                elif level == 3:
-                    if h2_entries:
-                        h3_by_h2[h2_entries[-1]].append((title, anchor_id))
                 all_anchors.append(anchor_id)
+                if level == 1:
+                    if cur_h1:
+                        h1_groups.append((cur_h1[0], cur_h1[1], cur_h2s))
+                    cur_h1 = (title, anchor_id)
+                    cur_h2s = []
+                elif level == 2:
+                    cur_h2s.append((title, anchor_id, []))
+                elif level == 3:
+                    if cur_h2s:
+                        cur_h2s[-1][2].append((title, anchor_id))
 
-            if h1_entry:
-                title, anchor_id = h1_entry
+            if cur_h1:
+                h1_groups.append((cur_h1[0], cur_h1[1], cur_h2s))
+
+            for title, anchor_id, h2_entries in h1_groups:
                 toc_items.append(
                     f'<li class="toc-chapter" data-anchor="{anchor_id}">'
                     f'<a href="#{anchor_id}">{escape(title)}</a>'
@@ -261,13 +366,12 @@ def build_toc(all_heading_ids):
 
                 if h2_entries:
                     sub_items = []
-                    for sub_title, sub_id in h2_entries:
+                    for sub_title, sub_id, h3_list in h2_entries:
                         display = sub_title if len(sub_title) <= 24 else sub_title[:24] + '…'
                         sub_items.append(
                             f'<li class="toc-section" data-anchor="{sub_id}">'
                             f'<a href="#{sub_id}">{escape(display)}</a></li>'
                         )
-                        h3_list = h3_by_h2.get((sub_title, sub_id), [])
                         if h3_list:
                             sub_sub = []
                             for h3_title, h3_id in h3_list:
@@ -320,10 +424,11 @@ def build_content(chapter_data):
                 heading_ids[(chapter_idx, 0)] = (1, h1_title, f"ch{chapter_idx}-h0")
                 continue
 
-            html = process_markdown(md_text, chapter_idx, heading_ids)
+            html, footnotes_html = process_markdown(md_text, chapter_idx, heading_ids)
             content_parts.append(f'''
             <section class="chapter-card" id="ch{chapter_idx}-card">
                 {html}
+                {footnotes_html}
             </section>''')
 
     return '\n'.join(content_parts)
@@ -765,8 +870,6 @@ def generate_html():
             color: var(--color-heading);
             margin-top: 40px;
             margin-bottom: 14px;
-            padding-left: 12px;
-            border-left: 4px solid var(--color-accent);
             line-height: 1.5;
         }}
 
@@ -953,6 +1056,37 @@ def generate_html():
         .chapter-card sup {{
             font-size: 0.75em;
             line-height: 0;
+        }}
+
+        .fn-ref {{
+            font-size: 0.75em;
+            vertical-align: super;
+            line-height: 0;
+            color: var(--color-accent);
+            white-space: nowrap;
+        }}
+
+        /* 参考文献区 */
+        .footnotes {{
+            margin-top: 16px;
+        }}
+
+        .footnotes h4 {{
+            font-family: var(--font-heading);
+            font-size: 1em;
+            color: var(--color-heading);
+            margin-bottom: 12px;
+        }}
+
+        .footnotes ol {{
+            padding-left: 28px;
+            font-size: 0.85em;
+            color: var(--color-secondary);
+            line-height: 1.8;
+        }}
+
+        .footnotes ol li {{
+            margin-bottom: 4px;
         }}
 
         /* 占位文字 */
