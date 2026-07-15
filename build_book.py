@@ -24,7 +24,7 @@ from datetime import datetime
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(PROJECT_DIR, "唯物主义历史观的基本阐述.html")
 BOOK_TITLE = "唯物主义历史观的基本阐述"
-SUBTITLE = "系统阐述唯物史观核心原理，对比批判非科学历史观"
+SUBTITLE = "用数据和逻辑展示唯物史观的解释力"
 
 # ============================================================
 # 章节定义：按书籍顺序
@@ -407,7 +407,7 @@ def build_content(chapter_data):
                 </section>''')
                 continue
 
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, 'r', encoding='utf-8-sig') as f:
                 md_text = f.read()
 
             md_text = fix_markdown_lists(md_text)
@@ -455,7 +455,7 @@ def generate_html():
             heading_ids = {}
 
             if os.path.exists(filepath):
-                with open(filepath, 'r', encoding='utf-8') as f:
+                with open(filepath, 'r', encoding='utf-8-sig') as f:
                     md_text = f.read()
                 headings = extract_headings(md_text)
                 for i, (level, title) in enumerate(headings):
@@ -699,7 +699,7 @@ def generate_html():
         .toc-chapter > a {{
             display: block;
             padding: 6px 20px 6px 24px;
-            font-size: 13.5px;
+            font-size: 12px;
             color: var(--color-text);
             text-decoration: none;
             transition: all 0.15s ease;
@@ -1308,7 +1308,7 @@ def generate_html():
     <!-- 页头 -->
     <header class="page-header">
         <h1>{escape(BOOK_TITLE)}</h1>
-        <p class="subtitle">系统阐述唯物史观核心原理，对比批判非科学历史观</p>
+        <p class="subtitle">{escape(SUBTITLE)}</p>
     </header>
 
     <!-- 移动端汉堡菜单 -->
