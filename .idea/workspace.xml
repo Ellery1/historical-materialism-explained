@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b32039f-2990-4de3-abeb-f568fae4c462" name="Changes" comment="" />
+    <list default="true" id="4b32039f-2990-4de3-abeb-f568fae4c462" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/01-思想溯源与理论形成.md" beforeDir="false" afterPath="$PROJECT_DIR$/01-思想溯源与理论形成.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/02-核心原理上-社会存在与社会意识.md" beforeDir="false" afterPath="$PROJECT_DIR$/02-核心原理上-社会存在与社会意识.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/唯物主义历史观的基本阐述.html" beforeDir="false" afterPath="$PROJECT_DIR$/唯物主义历史观的基本阐述.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -57,6 +61,8 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../little_tools/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -79,6 +85,8 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
