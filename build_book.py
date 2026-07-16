@@ -524,7 +524,8 @@ def generate_html():
             --bg-table-alt: #f9f6f0;
             --bg-header-start: #2d1b0e;
             --bg-header-end: #4a2c1a;
-            --bg-toc-active: rgba(90, 60, 30, 0.08);
+            --bg-toc-active: rgba(180, 40, 40, 0.10);
+            --toc-active-color: #b22222;
 
             --color-text: #333333;
             --color-heading: #1a1a2e;
@@ -710,13 +711,13 @@ def generate_html():
 
         .toc-chapter > a:hover {{
             background: var(--bg-toc-active);
-            color: var(--color-accent);
+            color: var(--toc-active-color);
         }}
 
         .toc-chapter.active > a {{
             background: var(--bg-toc-active);
-            border-left-color: var(--color-accent);
-            color: var(--color-accent);
+            border-left-color: var(--toc-active-color);
+            color: var(--toc-active-color);
             font-weight: 600;
         }}
 
@@ -736,11 +737,11 @@ def generate_html():
         }}
 
         .toc-section a:hover {{
-            color: var(--color-accent);
+            color: var(--toc-active-color);
         }}
 
         .toc-section.active a {{
-            color: var(--color-accent);
+            color: var(--toc-active-color);
             font-weight: 600;
         }}
 
@@ -760,11 +761,11 @@ def generate_html():
         }}
 
         .toc-subsection a:hover {{
-            color: var(--color-accent);
+            color: var(--toc-active-color);
         }}
 
         .toc-subsection.active a {{
-            color: var(--color-accent);
+            color: var(--toc-active-color);
             font-weight: 600;
         }}
 
