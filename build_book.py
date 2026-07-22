@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-将《唯物主义历史观的基本阐述》所有 Markdown 章节整合为一个排版精美的 HTML 电子书。
+将《用数据解释历史规律：唯物史观简述》所有 Markdown 章节整合为一个排版精美的 HTML 电子书。
 
 特性：
 - MathJax 3.x 渲染数学公式（行内 $...$ 和块级 $$...$$）
@@ -22,9 +22,8 @@ from html import escape
 from datetime import datetime
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_FILE = os.path.join(PROJECT_DIR, "唯物主义历史观的基本阐述.html")
-BOOK_TITLE = "唯物主义历史观的基本阐述"
-SUBTITLE = "用数据和逻辑展示唯物史观的解释力"
+OUTPUT_FILE = os.path.join(PROJECT_DIR, "用数据解释历史规律-唯物史观简述.html")
+BOOK_TITLE = "用数据解释历史规律：唯物史观简述"
 
 # ============================================================
 # 章节定义：按书籍顺序
@@ -1309,7 +1308,6 @@ def generate_html():
     <!-- 页头 -->
     <header class="page-header">
         <h1>{escape(BOOK_TITLE)}</h1>
-        <p class="subtitle">{escape(SUBTITLE)}</p>
     </header>
 
     <!-- 移动端汉堡菜单 -->
